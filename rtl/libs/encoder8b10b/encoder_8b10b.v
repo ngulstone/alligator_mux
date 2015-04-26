@@ -20,7 +20,7 @@ module encoder_8b10b #(
     parameter   PIPELINE_BITS   =   1   
 )
 (
-    input   wire                        c_clk,
+    input   wire                        i_clk,
     input   wire                        i_rst,          //synchronous active high
     input   wire                        i_enable,       //0=pause
     input   wire                        i_compliance,   //1=set running disparity -ve
