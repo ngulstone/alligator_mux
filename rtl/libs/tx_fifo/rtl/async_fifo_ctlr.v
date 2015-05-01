@@ -1,18 +1,16 @@
 //_____________________________________________________________________________
 // Description
-// Async FIFO Controller
+// Async FIFO Controller with almost-full and almost-empty flags
 //  
     
-// TODO:
-// 1. Pipe data w/ control
 
 `timescale 1ns/1ns
 
 module async_fifo_ctlr #(
-   parameter DATA_WIDTH = 8,
-   parameter PTR_WIDTH  = 10,
-   parameter AFULL_LVL  = 8,
-   parameter AEMPTY_LVL = 8
+   parameter DATA_WIDTH    = 8,
+   parameter PTR_WIDTH     = 10,
+   parameter AFULL_THRESH  = 8,
+   parameter AEMPTY_THRESH = 8
   )
   (
   input  wire                     i_wclk, 
@@ -45,26 +43,17 @@ module async_fifo_ctlr #(
 //_____________________________________________________________________________
 // Logic
 
-  assign o_wren     = i_push & ~fifo_full;
-  assign o_wptr     = wptr[PTR_WIDTH-1:0];
-  assign o_rden     = i_pop & ~fifo_empty;
-  assign o_rptr     = rptr[PTR_WIDTH-1:0];
 
-  assign rptr_adv_g    = bin2gray(rptr_adv);
-  assign rptr_g        = bin2gray(rptr);
-  assign wptr_g        = bin2gray(wptr);
 
-  assign rptr_sync_g2b = gray2bin(rptr_g_sync);
-
-  assign o_afull     =  ({~wptr_adv[PTR_WIDTH],wptr_adv[PTR_WIDTH-1:0]} == rptr_sync_g2b);
-  assign o_aempty    =  (wptr_g_sync == rptr_adv_g);
-
-  assign fifo_empty  =  (wptr_g_sync == rptr_g);
-  assign fifo_full   =  ({~wptr[PTR_WIDTH],wptr[PTR_WIDTH-1:0]} == rptr_sync_g2b);
-
-  // assign fifo_full  = ({{~{wptr_g[PTR_WIDTH:PTR_WIDTH-1]}},wptr_g[PTR_WIDTH-2:0]} == rptr_g_sync);
 
   // write clock domain
+  assign o_wren        = i_push & ~fifo_full;
+  assign o_wptr        = wptr[PTR_WIDTH-1:0];
+  assign wptr_g        = bin2gray(wptr);
+  assign rptr_sync_g2b = gray2bin(rptr_g_sync);
+  assign fifo_full     = ({~wptr[PTR_WIDTH],wptr[PTR_WIDTH-1:0]} == rptr_sync_g2b);
+  assign o_afull       = ({~wptr_adv[PTR_WIDTH],wptr_adv[PTR_WIDTH-1:0]} == rptr_sync_g2b);
+
   always @(posedge i_wclk or negedge i_wrst_n) begin
     if (!i_wrst_n) begin
        wptr       <= 'd0;
@@ -73,13 +62,20 @@ module async_fifo_ctlr #(
     else begin
       if (o_wren) begin
         wptr      <= wptr + 1'b1;
-        wptr_adv  <= wptr + AFULL_LVL;
+        wptr_adv  <= wptr + AFULL_THRESH;
       end
     end
   end
   
   
   // read clock domain
+  assign o_rden        = i_pop  & ~fifo_empty;
+  assign o_rptr        = rptr[PTR_WIDTH-1:0];
+  assign rptr_adv_g    = bin2gray(rptr_adv);
+  assign rptr_g        = bin2gray(rptr);
+  assign fifo_empty    = (wptr_g_sync == rptr_g);
+  assign o_aempty      = (wptr_g_sync == rptr_adv_g);
+
   always @(posedge i_rclk or negedge i_rrst_n) begin
     if (!i_rrst_n) begin
        rptr     <= 'd0;
@@ -88,7 +84,7 @@ module async_fifo_ctlr #(
     else begin
       if (o_rden) begin 
         rptr     <= rptr + 1'b1;
-        rptr_adv <= rptr + AEMPTY_LVL;
+        rptr_adv <= rptr + AEMPTY_THRESH;
       end
     end
   end
@@ -138,6 +134,12 @@ module async_fifo_ctlr #(
 
 //_____________________________________________________________________________
 // Instantiation
+//
+  synch_ff #(.WIDTH(PTR_WIDTH+1)) rptr_sync
+    ( .i_clk (i_wclk),
+      .i_d   (rptr_g),
+      .o_q   (rptr_g_sync)
+    );  
 
   synch_ff #(.WIDTH(PTR_WIDTH+1)) wptr_sync
     ( .i_clk (i_rclk),
@@ -145,9 +147,4 @@ module async_fifo_ctlr #(
       .o_q   (wptr_g_sync)
     );  
 
-  synch_ff #(.WIDTH(PTR_WIDTH+1)) rptr_sync
-    ( .i_clk (i_wclk),
-      .i_d   (rptr_g),
-      .o_q   (rptr_g_sync)
-    );  
 endmodule

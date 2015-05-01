@@ -8,7 +8,7 @@
 
 module tx_fifo #(
    parameter DATA_WIDTH = 8,
-   parameter PTR_WIDTH  = 11
+   parameter ADDR_WIDTH = 10
   )
   (
   input  wire                     i_wclk, 
@@ -29,9 +29,7 @@ module tx_fifo #(
    
   wire                 fifo_empty, fifo_full;
 
-  wire                 wren;
-  wire [PTR_WIDTH-1:0] wptr, rptr;
-  reg  [PTR_WIDTH-1:0] wptr_g2b_synch, rptr_g2b_synch;
+  wire [ADDR_WIDTH-1:0] wptr, rptr;
 
 //_____________________________________________________________________________
 // Logic

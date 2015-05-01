@@ -35,7 +35,7 @@ module tb ();
   // DUT
 tx_fifo #(
    .DATA_WIDTH (8),
-   .PTR_WIDTH  (10)
+   .ADDR_WIDTH (10)
   )
   tx_fifo0 (
     .i_wclk             (wclk), 

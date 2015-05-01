@@ -19,7 +19,7 @@ module dp_ram #(
    input  wire                   i_rclk, 
    input  wire [ADDR_WIDTH-1:0]  i_raddr, 
    input  wire                   i_ren, 
-   output wire [DATA_WIDTH-1:0]  o_rdata
+   output reg  [DATA_WIDTH-1:0]  o_rdata
 
    );
 
@@ -32,12 +32,14 @@ module dp_ram #(
 
    //write clock domain
    always @(posedge i_wclk) begin
-      if (i_wen) dp_mem[i_waddr] <= i_wdata; 
+     if (i_wen) dp_mem[i_waddr] <= i_wdata; 
    end
    
    
    //read clock domain
-   assign o_rdata = dp_mem[i_raddr];
+   always @(posedge i_rclk) begin
+     o_rdata <= dp_mem[i_raddr];
+   end
    
 //_____________________________________________________________________________
 // Instantiation
