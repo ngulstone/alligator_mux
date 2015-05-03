@@ -24,7 +24,7 @@ module encoder_8b10b #(
     input   wire                        i_rst,          //synchronous active high
     input   wire                        i_enable,       //0=pause
     input   wire                        i_compliance,   //1=set running disparity -ve
-    input   wire    [DATA_BYTES-1:0]    i_data,     
+    input   wire    [DATA_BYTES*8-1:0]  i_data,     
     input   wire    [DATA_BYTES-1:0]    i_datak,    //1=corresponding i_data bytes is a k character
     output  reg     [DATA_BYTES*10-1:0] o_data10,
     input   wire    [PIPELINE_BITS-1:0] i_pipeline, //for signals that need to travel with the data
